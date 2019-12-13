@@ -48,7 +48,7 @@ def get_drinks():
 
     if len(all_drinks) == 0:
         abort(404)
-    
+
     drinks = [drink.short() for drink in all_drinks]
 
     return jsonify({
@@ -66,6 +66,22 @@ def get_drinks():
     where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks-detail')
+@requires_auth('get:drinks-detail')
+def get_drink_details(self):
+    all_drinks = Drink.query.order_by(Drink.id).all()
+
+    if len(all_drinks) == 0:
+        abort(404)
+
+    drinks = [drink.long() for drink in all_drinks]
+
+    return jsonify({
+        'success': True,
+        'drinks': drinks,
+    }), 200
 
 
 '''
