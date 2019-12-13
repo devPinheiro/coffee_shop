@@ -44,17 +44,20 @@ def after_request(response):
 
 @app.route('/drinks')
 def get_drinks():
-    all_drinks = Drink.query.order_by(Drink.id).all()
+    try:
+        all_drinks = Drink.query.order_by(Drink.id).all()
 
-    if len(all_drinks) == 0:
-        abort(404)
+        if len(all_drinks) == 0:
+            abort(404)
 
-    drinks = [drink.short() for drink in all_drinks]
+        drinks = [drink.short() for drink in all_drinks]
 
-    return jsonify({
-        'success': True,
-        'drinks': drinks,
-    }), 200
+        return jsonify({
+            'success': True,
+            'drinks': drinks,
+        }), 200
+    except Exception:
+        abort(422)
 
 
 '''
@@ -71,17 +74,20 @@ def get_drinks():
 @app.route('/drinks-detail')
 @requires_auth('get:drinks-detail')
 def get_drink_details(self):
-    all_drinks = Drink.query.order_by(Drink.id).all()
+    try:
+        all_drinks = Drink.query.order_by(Drink.id).all()
 
-    if len(all_drinks) == 0:
-        abort(404)
+        if len(all_drinks) == 0:
+            abort(404)
 
-    drinks = [drink.long() for drink in all_drinks]
+        drinks = [drink.long() for drink in all_drinks]
 
-    return jsonify({
-        'success': True,
-        'drinks': drinks,
-    }), 200
+        return jsonify({
+            'success': True,
+            'drinks': drinks,
+        }), 200
+    except Exception:
+        abort(422)
 
 
 '''
@@ -94,6 +100,31 @@ def get_drink_details(self):
     where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks', methods=['POST'])
+@requires_auth('post:drinks')
+def create_drink(self):
+    body = request.get_json()
+
+    new_title = body.get('title', None)
+    new_recipe = body.get('recipe', None)
+
+    try:
+        if body is None:
+            abort(400)
+            
+        drink = Drink(title=new_title, recipe=json.dumps(new_recipe))
+        drink.insert()
+        new_drink = [drink.long()]
+        
+        return jsonify({
+            'success': True,
+            'drink': new_drink,
+        }), 200
+
+    except Exception:
+        abort(400)
 
 
 '''

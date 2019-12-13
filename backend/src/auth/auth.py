@@ -145,9 +145,9 @@ def verify_decode_jwt(token):
         except jwt.JWTClaimsError:
             raise AuthError({
                 'code': 'invalid_claims',
-                'description': 'Incorrect claims. Please, check the audience and issuer.'
+                'description': 'Incorrect claims. Please, check'
+                        + ' the audience and issuer.'
             }, 401)
-
         except Exception:
             raise AuthError({
                 'code': 'invalid_header',
