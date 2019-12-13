@@ -17,6 +17,19 @@ CORS(app)
 '''
 db_drop_and_create_all()
 
+# Set up CORS
+
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Headers',
+                         'Content-Type,Authorization,true')
+    response.headers.add('Access-Control-Allow-Methods',
+                         'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+
 # ROUTES
 '''
 @TODO implement endpoint
@@ -28,11 +41,20 @@ db_drop_and_create_all()
         or appropriate status code indicating reason for failure
 '''
 
-@app.route('/books', methods=['GET'])
-@requires_auth('get:drink-details')
-def books(jwt):
 
-    return 'not implemented'
+@app.route('/drinks')
+def get_drinks():
+    all_drinks = Drink.query.order_by(Drink.id).all()
+
+    if len(all_drinks) == 0:
+        abort(404)
+    
+    drinks = [drink.short() for drink in all_drinks]
+
+    return jsonify({
+        'success': True,
+        'drinks': drinks,
+    }), 200
 
 
 '''
@@ -109,9 +131,14 @@ def unprocessable(error):
 
 '''
 
+'''
+@TODO implement error handler for 404
+    error handler should conform to general task above 
+'''
+
 
 @app.errorhandler(404)
-def NotFound(error):
+def not_found(error):
     return jsonify({
         "success": False,
         "error": 404,
@@ -120,12 +147,15 @@ def NotFound(error):
 
 
 '''
-@TODO implement error handler for 404
-    error handler should conform to general task above 
-'''
-
-
-'''
 @TODO implement error handler for AuthError
     error handler should conform to general task above 
 '''
+
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        "success": False,
+        "error": 400,
+        "message": "bad request"
+    }), 400
