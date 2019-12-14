@@ -15,7 +15,7 @@ CORS(app)
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
-db_drop_and_create_all()
+# db_drop_and_create_all()
 
 # Set up CORS
 
@@ -44,20 +44,20 @@ def after_request(response):
 
 @app.route('/drinks')
 def get_drinks():
-    try:
-        all_drinks = Drink.query.order_by(Drink.id).all()
+    # try:
+    all_drinks = Drink.query.order_by(Drink.id).all()
 
-        if len(all_drinks) == 0:
-            abort(404)
+    if len(all_drinks) == 0:
+        abort(404)
 
-        drinks = [drink.short() for drink in all_drinks]
+    drinks = [json.loads(drink.recipe) for drink in all_drinks]
 
-        return jsonify({
+    return jsonify({
             'success': True,
             'drinks': drinks,
         }), 200
-    except Exception:
-        abort(422)
+    # except Exception:
+    #     abort(422)
 
 
 '''
@@ -75,7 +75,7 @@ def get_drinks():
 @requires_auth('get:drinks-detail')
 def get_drink_details(self):
     try:
-        all_drinks = Drink.query.order_by(Drink.id).all()
+        all_drinks = Drink.query.all()
 
         if len(all_drinks) == 0:
             abort(404)
