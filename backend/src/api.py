@@ -44,20 +44,21 @@ def after_request(response):
 
 @app.route('/drinks')
 def get_drinks():
-    # try:
-    all_drinks = Drink.query.order_by(Drink.id).all()
+    try:
+        all_drinks = Drink.query.order_by(Drink.id).all()
 
-    if len(all_drinks) == 0:
-        abort(404)
+        if len(all_drinks) == 0:
+            abort(404)
 
-    drinks = [json.loads(drink.recipe) for drink in all_drinks]
+        drinks = [{"title": drink.title, "recipe": json.loads(drink.recipe)}
+                  for drink in all_drinks]
 
-    return jsonify({
+        return jsonify({
             'success': True,
             'drinks': drinks,
         }), 200
-    # except Exception:
-    #     abort(422)
+    except Exception:
+        abort(422)
 
 
 '''
@@ -113,11 +114,11 @@ def create_drink(self):
     try:
         if body is None:
             abort(400)
-            
+
         drink = Drink(title=new_title, recipe=json.dumps(new_recipe))
         drink.insert()
         new_drink = [drink.long()]
-        
+
         return jsonify({
             'success': True,
             'drink': new_drink,
@@ -141,6 +142,36 @@ def create_drink(self):
 '''
 
 
+@app.route('/drinks/<int:drink_id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def update_drink(drink_id):
+    try:
+        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+        if drink is None:
+            abort(404)
+
+        body = request.get_json()
+        if body is None:
+            abort(400)
+
+        new_title = body.get('title', None)
+        new_recipe = body.get('recipe', None)
+
+        drink.title = new_title
+        drink.recipe = json.dumps(new_recipe)
+        drink.update()
+
+        new_drink = [drink.long()]
+
+        return jsonify({
+            'success': True,
+            'drink': new_drink,
+        }), 200
+
+    except Exception:
+        abort(422)
+
+
 '''
 @TODO implement endpoint
     DELETE /drinks/<id>
@@ -152,6 +183,26 @@ def create_drink(self):
     where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route('/drinks/<int:drink_id>', methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drink(drink_id):
+    try:
+        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+
+        if drink is None:
+            abort(404)
+
+        drink.delete()
+
+        return jsonify({
+            'success': True,
+            'delete': drink_id,
+        })
+
+    except Exception:
+        abort(422)
 
 
 # Error Handling
