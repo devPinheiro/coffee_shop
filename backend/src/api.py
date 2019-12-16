@@ -111,21 +111,14 @@ def create_drink(self):
     new_title = body.get('title', None)
     new_recipe = body.get('recipe', None)
 
-    try:
-        if body is None:
-            abort(400)
+    # drink = Drink(title=new_title, recipe=json.dumps(new_recipe))
+    # drink.insert()
+    # new_drink = [drink.long()]
 
-        drink = Drink(title=new_title, recipe=json.dumps(new_recipe))
-        drink.insert()
-        new_drink = [drink.long()]
-
-        return jsonify({
-            'success': True,
-            'drink': new_drink,
-        }), 200
-
-    except Exception:
-        abort(400)
+    return jsonify({
+        'success': True,
+        'drink': body,
+    }), 200
 
 
 '''
@@ -144,21 +137,27 @@ def create_drink(self):
 
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
-def update_drink(drink_id):
+def update_drink(self, drink_id):
+
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+
+    if drink is None:
+        abort(404)
+
+    body = request.get_json()
+    if body is None:
+        abort(400)
+
+    new_title = body.get('title', None)
+    new_recipe = body.get('recipe', None)
+
     try:
-        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
-        if drink is None:
-            abort(404)
+        if new_title is not None:
+            drink.title = new_title
 
-        body = request.get_json()
-        if body is None:
-            abort(400)
+        if new_recipe is not None:
+            drink.recipe = json.dumps(new_recipe)
 
-        new_title = body.get('title', None)
-        new_recipe = body.get('recipe', None)
-
-        drink.title = new_title
-        drink.recipe = json.dumps(new_recipe)
         drink.update()
 
         new_drink = [drink.long()]
@@ -187,7 +186,7 @@ def update_drink(drink_id):
 
 @app.route('/drinks/<int:drink_id>', methods=['DELETE'])
 @requires_auth('delete:drinks')
-def delete_drink(drink_id):
+def delete_drink(self, drink_id):
     try:
         drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
 
@@ -229,6 +228,16 @@ def unprocessable(error):
 
 '''
 
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        "success": False,
+        "error": 400,
+        "message": "bad request"
+    }), 400
+
+
 '''
 @TODO implement error handler for 404
     error handler should conform to general task above 
@@ -250,10 +259,8 @@ def not_found(error):
 '''
 
 
-@app.errorhandler(400)
-def bad_request(error):
+@app.errorhandler(AuthError)
+def auth_error(error):
     return jsonify({
-        "success": False,
-        "error": 400,
-        "message": "bad request"
-    }), 400
+        "message": error.error
+    }), error.status_code
