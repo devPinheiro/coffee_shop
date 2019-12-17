@@ -23,7 +23,7 @@ CORS(app)
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Headers',
-                         'Content-Type,Authorization,true')
+                         'Content-Type,Authorization,true') 
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -105,20 +105,26 @@ def get_drink_details(self):
 
 @app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
-def create_drink(self):
-    body = request.get_json()
+def createdrink(self):
 
+    body = request.get_json()
     new_title = body.get('title', None)
     new_recipe = body.get('recipe', None)
 
-    # drink = Drink(title=new_title, recipe=json.dumps(new_recipe))
-    # drink.insert()
-    # new_drink = [drink.long()]
+    try:
+        if body == {}:
+            abort(400)
 
-    return jsonify({
-        'success': True,
-        'drink': body,
-    }), 200
+        drink = Drink(title=new_title, recipe=json.dumps(new_recipe))
+        drink.insert()
+        new_drink = [drink.long()]
+
+        return jsonify({
+            'success': True,
+            'drinks': new_drink,
+        }), 200
+    except Exception:
+        abort(422)
 
 
 '''
@@ -164,7 +170,7 @@ def update_drink(self, drink_id):
 
         return jsonify({
             'success': True,
-            'drink': new_drink,
+            'drinks': new_drink,
         }), 200
 
     except Exception:
@@ -187,21 +193,17 @@ def update_drink(self, drink_id):
 @app.route('/drinks/<int:drink_id>', methods=['DELETE'])
 @requires_auth('delete:drinks')
 def delete_drink(self, drink_id):
-    try:
-        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
 
-        if drink is None:
-            abort(404)
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
 
-        drink.delete()
+    if drink is None:
+        abort(404)
+    drink.delete()
 
-        return jsonify({
-            'success': True,
-            'delete': drink_id,
-        })
-
-    except Exception:
-        abort(422)
+    return jsonify({
+        'success': True,
+        'delete': drink_id,
+    }), 200
 
 
 # Error Handling
